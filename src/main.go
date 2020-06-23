@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"strconv"
 	"strings"
@@ -29,6 +30,8 @@ func http_get(url string) string {
 		return ""
 	}
 	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36")
+	d, _ := httputil.DumpRequest(req, false)
+	fmt.Print(string(d))
 	resp, err := client.Do(req)
 	if err != nil {
 		xlog.Error("get error: ", err)
