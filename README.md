@@ -1,1 +1,2 @@
-# 1024search
+# usage
+./1024search.py <keyword>
