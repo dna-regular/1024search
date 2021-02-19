@@ -23,11 +23,13 @@ async def GetHtml(url, params=None, referer='', proxy=None, timeout=5):
                                    headers=headers,
                                    timeout=timeout) as resp:
                 if resp.status == 200:
-                    return await resp.text()
+                    html =  await resp.text()
+                    return {'url':url, 'resp':html}
                 else:
                     printf("check status_code error:%d", resp.status)
                     return
         except asyncio.TimeoutError:
+            # f是格式化, f-string
             printf(f"request {url} timeout proxy {proxy}")
             return
         except Exception as exc:

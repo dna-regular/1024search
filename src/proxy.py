@@ -16,7 +16,7 @@ async def GetHttpsProxyList():
         printf("get raw proxy list error")
         return None
     # 使用'\n' 切分字符串,得到一个list
-    lines = proxies.splitlines(False)
+    lines = proxies['resp'].splitlines(False)
     for line in lines:
         # 只保留高密代理,https的一定是高密的
         if (line.find('https') > 0):
