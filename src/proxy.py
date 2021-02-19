@@ -7,6 +7,7 @@ from logging import info as printf
 proxy_list = []
 
 async def Init():
+   printf("init")
    await GetHttpsProxyList()
 
 async def GetHttpsProxyList():

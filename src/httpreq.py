@@ -1,12 +1,13 @@
 import proxy
 import asyncio
+import pdb
 import aiohttp
 import logging as log
 from logging import info as printf
 from conf import get_json_conf
-from aiohttp_socks import ProxyConnector
+from aiohttp_proxy import ProxyConnector, ProxyType
 
-async def GetHtml(url, params=None, referer=None, proxy=None, timeout=5):
+async def GetHtml(url, params=None, referer='', proxy=None, timeout=5):
     conf = get_json_conf()
     headers = {
             'User-Agent':conf['http']['user_agent'],
@@ -16,17 +17,24 @@ async def GetHtml(url, params=None, referer=None, proxy=None, timeout=5):
     if proxy is not None:
         connector = ProxyConnector.from_url(proxy)
     async with aiohttp.ClientSession(connector=connector) as session:
-        async with session.get(url, 
-                               params=params, 
-                               headers=headers, 
-                               timeout=timeout) as resp:
-            if resp.status == 200:
-                return await resp.text()
-            else:
-                printf("check status_code error:%d", resp.status_code)
-                return None
+        try:
+            async with session.get(url,
+                                   params=params,
+                                   headers=headers,
+                                   timeout=timeout) as resp:
+                if resp.status == 200:
+                    return await resp.text()
+                else:
+                    printf("check status_code error:%d", resp.status)
+                    return
+        except asyncio.TimeoutError:
+            printf(f"request {url} timeout proxy {proxy}")
+            return
+        except Exception as exc:
+            printf(str(exc)+ " " + proxy)
+            return
 
-async def GetHtmlWithProxy(url, referer=None, params=None, timeout=10):
+async def GetHtmlWithProxy(url, referer='', params=None, timeout=3):
     for i in range(5):
         _proxy = proxy.GetProxy()
         if _proxy is None:
@@ -34,7 +42,6 @@ async def GetHtmlWithProxy(url, referer=None, params=None, timeout=10):
             return None
         proxy.SetUsed(_proxy)
         proxy_url = _proxy['type'] + '://'+_proxy['host']+':'+str(_proxy['port'])
-        proxies = {_proxy['type']: proxy_url}
         resp = await GetHtml(url, params, referer, proxy_url, timeout)
         if resp is not None:
             proxy.SetUnused(_proxy)
@@ -44,8 +51,10 @@ async def GetHtmlWithProxy(url, referer=None, params=None, timeout=10):
     return resp
 
 async def main():
+    log.basicConfig(level=log.INFO, format='[%(filename)s:%(lineno)d] %(message)s')
+    printf("main")
     await proxy.Init()
-    await GetHtmlWithProxy("http://www.baidu.com")
+    resp = await GetHtmlWithProxy("http://www.baidu.com")
     print(resp)
 
 if __name__ == '__main__':
