@@ -1,15 +1,16 @@
 import ast
+import asyncio
 import httpreq
 import time
 from logging import info as printf
 
 proxy_list = []
 
-def Init():
-   GetHttpsProxyList()
+async def Init():
+   await GetHttpsProxyList()
 
-def GetHttpsProxyList():
-    proxies = http.GetHtml('https://raw.githubusercontent.com/fate0/proxylist/master/proxy.list')
+async def GetHttpsProxyList():
+    proxies = await httpreq.GetHtml('https://raw.githubusercontent.com/fate0/proxylist/master/proxy.list')
     if proxies is None:
         printf("get raw proxy list error")
         return None
@@ -24,6 +25,7 @@ def GetHttpsProxyList():
                 proxy_list.append(proxy)
             except Exception as e:
                 printf(str(e))
+    printf("got %d proxies", len(proxy_list))
 
 def GetUnusedProxy():
     for proxy in proxy_list:
