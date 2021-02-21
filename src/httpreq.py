@@ -23,33 +23,45 @@ async def GetHtml(url, params=None, referer='', proxy=None, timeout=5):
                                    headers=headers,
                                    timeout=timeout) as resp:
                 if resp.status == 200:
-                    html =  await resp.text()
-                    return {'url':url, 'resp':html}
+                    html =  await resp.read()
+                    return { 
+                        'url':url, 
+                        'resp':html, 
+                        'encoding':resp.headers['Content-Encoding'],
+                        'success':True }
                 else:
-                    printf("check status_code error:%d", resp.status)
-                    return
+                    printf("err:%d url:%s proxy:%s", resp.status, url, proxy)
+                    return { 
+                        'url':url, 
+                        'reason':str(resp.status),
+                        'success':False,
+                        'proxy':proxy }
         except asyncio.TimeoutError:
             # f是格式化, f-string
             printf(f"request {url} timeout proxy {proxy}")
-            return
+            return {
+                'url':url, 
+                'reason':'timeout',
+                'success':False,
+                'proxy':proxy }
         except Exception as exc:
-            printf(str(exc)+ " " + proxy)
-            return
+            printf(type(exc))
+            printf(str(exc)+ " url:" + url + "proxy" + proxy)
+            return {
+                'url':url, 
+                'reason':str(exc),
+                'success':False,
+                'proxy':proxy }
 
 async def GetHtmlWithProxy(url, referer='', params=None, timeout=3):
-    for i in range(5):
-        _proxy = proxy.GetProxy()
-        if _proxy is None:
-            printf("get proxy error")
-            return None
-        proxy.SetUsed(_proxy)
-        proxy_url = _proxy['type'] + '://'+_proxy['host']+':'+str(_proxy['port'])
-        resp = await GetHtml(url, params, referer, proxy_url, timeout)
-        if resp is not None:
-            proxy.SetUnused(_proxy)
-            break
-        else:
-            pass
+    _proxy = proxy.GetProxy()
+    if _proxy is None:
+        printf("get proxy error")
+        return None
+    proxy.SetUsed(_proxy)
+    proxy_url = _proxy['type'] + '://' + \
+    _proxy['host']+':'+str(_proxy['port'])
+    resp = await GetHtml(url, params, referer, proxy_url, timeout)
     return resp
 
 async def main():

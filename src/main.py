@@ -15,19 +15,24 @@ keyword = ''
 def callback(task):
     global err_cnt
     ret = task.result()
-    if ret is None:
-        err_cnt = err_cnt + 1
+    #printf(ret['url'])
+    if not ret['success']:
         return
-    if keyword in ret['resp']:
+    resp = str(ret['resp'], encoding='gbk')
+    if keyword in resp:
         urls.append(ret['url'])
+        #printf(ret['url'])
 
-
+tasks = []
 async def start(conf):
     for i in range(100):
         url = conf['http']['url'] + str(i)
         task = asyncio.create_task(httpreq.GetHtmlWithProxy(url))
         task.add_done_callback(callback)
-        await task
+        tasks.append(task)
+    printf("fire tasks done")
+    for i in range(100):
+        await tasks[i]
 
 
 async def main():
@@ -41,3 +46,4 @@ if __name__ == '__main__':
     keyword = sys.argv[1]
     asyncio.run(main())
     print(urls)
+    printf("err count: %d", err_cnt)
