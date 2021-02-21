@@ -9,21 +9,28 @@ from logging import info as printf
 from conf import get_json_conf
 
 err_cnt = 0
-urls = []
+result_urls = []
 keyword = ''
+tasks = []
+retry_cnt = {}
 
 def callback(task):
     global err_cnt
     ret = task.result()
-    #printf(ret['url'])
-    if not ret['success']:
+    _proxy = ret['proxy']
+    url = ret['url']
+    proxy.SetUnused(_proxy)
+    if not ret['success'] and retry_cnt[url] <= 3:
+        new_task = asyncio.create_task(httpreq.GetHtmlWithProxy(url))
+        new_task.add_done_callback(callback)
+        tasks.append(new_task)
+        retry_cnt[url] = retry_cnt[url] + 1
+        proxy.IncFailCnt(_proxy)
         return
     resp = str(ret['resp'], encoding='gbk')
     if keyword in resp:
-        urls.append(ret['url'])
-        #printf(ret['url'])
+        result_urls.append(ret['url'])
 
-tasks = []
 async def start(conf):
     for i in range(100):
         url = conf['http']['url'] + str(i)
@@ -31,8 +38,8 @@ async def start(conf):
         task.add_done_callback(callback)
         tasks.append(task)
     printf("fire tasks done")
-    for i in range(100):
-        await tasks[i]
+    for task in tasks:
+        await task
 
 
 async def main():
@@ -45,5 +52,5 @@ async def main():
 if __name__ == '__main__':
     keyword = sys.argv[1]
     asyncio.run(main())
-    print(urls)
+    print(result_urls)
     printf("err count: %d", err_cnt)

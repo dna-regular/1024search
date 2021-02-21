@@ -24,6 +24,9 @@ async def GetHttpsProxyList():
             try:
                 proxy = ast.literal_eval(line)
                 proxy['used'] = False
+                proxy['url'] = proxy['type'] + '://' + \
+                               proxy['host']+ ':' + str(proxy['port'])
+                proxy['fail_cnt'] = 0
                 proxy_list.append(proxy)
             except Exception as e:
                 printf(str(e))
@@ -53,3 +56,8 @@ def SetUsed(proxy):
 
 def RemoveProxy(proxy):
     proxy_list.remove(proxy)
+
+def IncFailCnt(proxy):
+    proxy['fail_cnt'] = proxy['fail_cnt'] + 1
+    if proxy['fail_cnt'] >= 3:
+       proxy_list.remove(proxy) 

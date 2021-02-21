@@ -15,8 +15,9 @@ async def GetHtml(url, params=None, referer='', proxy=None, timeout=5):
     }
     connector = None
     if proxy is not None:
-        connector = ProxyConnector.from_url(proxy)
+        connector = ProxyConnector.from_url(proxy['url'])
     async with aiohttp.ClientSession(connector=connector) as session:
+        ret = {'url':url, 'proxy':proxy, 'success':False}
         try:
             async with session.get(url,
                                    params=params,
@@ -24,34 +25,23 @@ async def GetHtml(url, params=None, referer='', proxy=None, timeout=5):
                                    timeout=timeout) as resp:
                 if resp.status == 200:
                     html =  await resp.read()
-                    return { 
-                        'url':url, 
-                        'resp':html, 
-                        'encoding':resp.headers['Content-Encoding'],
-                        'success':True }
+                    ret['resp'] = html
+                    ret['success'] = True
+                    return ret 
                 else:
                     printf("err:%d url:%s proxy:%s", resp.status, url, proxy)
-                    return { 
-                        'url':url, 
-                        'reason':str(resp.status),
-                        'success':False,
-                        'proxy':proxy }
+                    ret['reason'] = str(resp.status)
+                    return ret 
         except asyncio.TimeoutError:
             # f是格式化, f-string
             printf(f"request {url} timeout proxy {proxy}")
-            return {
-                'url':url, 
-                'reason':'timeout',
-                'success':False,
-                'proxy':proxy }
+            ret['reason'] = 'timeout'
+            return ret
         except Exception as exc:
             printf(type(exc))
             printf(str(exc)+ " url:" + url + "proxy" + proxy)
-            return {
-                'url':url, 
-                'reason':str(exc),
-                'success':False,
-                'proxy':proxy }
+            ret['reason'] = str(exc)
+            return ret
 
 async def GetHtmlWithProxy(url, referer='', params=None, timeout=3):
     _proxy = proxy.GetProxy()
@@ -59,9 +49,7 @@ async def GetHtmlWithProxy(url, referer='', params=None, timeout=3):
         printf("get proxy error")
         return None
     proxy.SetUsed(_proxy)
-    proxy_url = _proxy['type'] + '://' + \
-    _proxy['host']+':'+str(_proxy['port'])
-    resp = await GetHtml(url, params, referer, proxy_url, timeout)
+    resp = await GetHtml(url, params, referer, _proxy, timeout)
     return resp
 
 async def main():
