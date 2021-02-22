@@ -13,27 +13,32 @@ result_urls = []
 keyword = ''
 tasks = []
 retry_cnt = {}
+MAX_PAGES = 5
+RETRY_MAX = 3
 
 def callback(task):
     global err_cnt
     ret = task.result()
     _proxy = ret['proxy']
     url = ret['url']
-    proxy.SetUnused(_proxy)
-    if not ret['success'] and retry_cnt[url] <= 3:
-        new_task = asyncio.create_task(httpreq.GetHtmlWithProxy(url))
-        new_task.add_done_callback(callback)
-        tasks.append(new_task)
-        retry_cnt[url] = retry_cnt[url] + 1
+    if not ret['success']:
+        if retry_cnt[url] <= RETRY_MAX:
+            new_task = asyncio.create_task(httpreq.GetHtmlWithProxy(url))
+            new_task.add_done_callback(callback)
+            tasks.append(new_task)
+            retry_cnt[url] = retry_cnt[url] + 1
+        proxy.SetUnused(_proxy)
         proxy.IncFailCnt(_proxy)
         return
+    proxy.SetUnused(_proxy)
     resp = str(ret['resp'], encoding='gbk')
     if keyword in resp:
         result_urls.append(ret['url'])
 
 async def start(conf):
-    for i in range(100):
+    for i in range(MAX_PAGES):
         url = conf['http']['url'] + str(i)
+        retry_cnt[url] = 0
         task = asyncio.create_task(httpreq.GetHtmlWithProxy(url))
         task.add_done_callback(callback)
         tasks.append(task)

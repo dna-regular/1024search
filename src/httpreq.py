@@ -29,17 +29,24 @@ async def GetHtml(url, params=None, referer='', proxy=None, timeout=5):
                     ret['success'] = True
                     return ret 
                 else:
-                    printf("err:%d url:%s proxy:%s", resp.status, url, proxy)
+                    printf("err:%d url:%s proxy:%s", resp.status, url, proxy['url'])
                     ret['reason'] = str(resp.status)
                     return ret 
         except asyncio.TimeoutError:
-            # f是格式化, f-string
-            printf(f"request {url} timeout proxy {proxy}")
-            ret['reason'] = 'timeout'
+            printf("request %s timeout proxy:%s", url, proxy['url'])
+            ret['reason'] = 'TimeoutError'
+            return ret
+        except aiohttp.client_exceptions.ClientProxyConnectionError:
+            printf("ClientProxyConnectionError url:%s proxy:%s", url, proxy['url'])
+            ret['reason'] = 'ClientProxyConnectionError'
+            return ret
+        except aiohttp.client_exceptions.ServerDisconnectedError:
+            printf("ServerDisconnectedError url:%s proxy:%s", url, proxy['url'])
+            ret['reason'] = 'ServerDisconnectedError'
             return ret
         except Exception as exc:
             printf(type(exc))
-            printf(str(exc)+ " url:" + url + "proxy" + proxy)
+            printf(str(exc)+ " url:" + url + "proxy" + proxy['url'])
             ret['reason'] = str(exc)
             return ret
 
