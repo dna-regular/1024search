@@ -29,24 +29,15 @@ async def GetHtml(url, params=None, referer='', proxy=None, timeout=5):
                     ret['success'] = True
                     return ret 
                 else:
-                    printf("err:%d url:%s proxy:%s", resp.status, url, proxy['url'])
+                    printf("url: %s proxy: %s err: %s", url, proxy['url'], str(resp.status))
                     ret['reason'] = str(resp.status)
                     return ret 
-        except asyncio.TimeoutError:
-            printf("request %s timeout proxy:%s", url, proxy['url'])
-            ret['reason'] = 'TimeoutError'
-            return ret
-        except aiohttp.client_exceptions.ClientProxyConnectionError:
-            printf("ClientProxyConnectionError url:%s proxy:%s", url, proxy['url'])
-            ret['reason'] = 'ClientProxyConnectionError'
-            return ret
-        except aiohttp.client_exceptions.ServerDisconnectedError:
-            printf("ServerDisconnectedError url:%s proxy:%s", url, proxy['url'])
-            ret['reason'] = 'ServerDisconnectedError'
+        except asyncio.exceptions.TimeoutError:
+            printf("url: %s proxy: %s err: %s", url, proxy['url'], 'timeout')
+            ret['reason'] = 'timeout' 
             return ret
         except Exception as exc:
-            printf(type(exc))
-            printf(str(exc)+ " url:" + url + "proxy" + proxy['url'])
+            printf("url: %s proxy: %s err: %s", url, proxy['url'], str(exc))
             ret['reason'] = str(exc)
             return ret
 
@@ -60,7 +51,7 @@ async def GetHtmlWithProxy(url, referer='', params=None, timeout=3):
     return resp
 
 async def main():
-    log.basicConfig(level=log.INFO, format='[%(filename)s:%(lineno)d] %(message)s')
+    log.basicConfig(level=log.INFO, format='[ %(filename)s : %(lineno)d ] %(message)s')
     printf("main")
     await proxy.Init()
     resp = await GetHtmlWithProxy("http://www.baidu.com")

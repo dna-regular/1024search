@@ -13,7 +13,7 @@ result_urls = []
 keyword = ''
 tasks = []
 retry_cnt = {}
-MAX_PAGES = 5
+MAX_PAGES = 20
 RETRY_MAX = 3
 
 def callback(task):
@@ -31,6 +31,7 @@ def callback(task):
         proxy.IncFailCnt(_proxy)
         return
     proxy.SetUnused(_proxy)
+    printf('req url: %s success', url)
     resp = str(ret['resp'], encoding='gbk')
     if keyword in resp:
         result_urls.append(ret['url'])
@@ -46,16 +47,22 @@ async def start(conf):
     for task in tasks:
         await task
 
-
 async def main():
-    log.basicConfig(level=log.INFO, format='[%(filename)s:%(lineno)d] %(message)s')
+    global err_cnt
+    log.basicConfig(level=log.INFO, format='[ %(filename)s: %(lineno)d ] %(message)s')
     await proxy.Init()
     conf = get_json_conf()
     printf("start")
     await start(conf)
+    for url, cnt in retry_cnt.items():
+        if cnt > RETRY_MAX:
+            printf("url: %s retry %d times still fail", url, cnt)
+            err_cnt += 1
 
 if __name__ == '__main__':
     keyword = sys.argv[1]
     asyncio.run(main())
-    print(result_urls)
+    printf('results: ')
+    for url in result_urls:
+        print('\t' + url)
     printf("err count: %d", err_cnt)

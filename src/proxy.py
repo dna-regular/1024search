@@ -5,6 +5,7 @@ import time
 from logging import info as printf
 
 proxy_list = []
+index = 0
 
 async def Init():
    printf("init")
@@ -33,8 +34,10 @@ async def GetHttpsProxyList():
     printf("got %d proxies", len(proxy_list))
 
 def GetUnusedProxy():
-    for proxy in proxy_list:
+    global index
+    for proxy in proxy_list[index:]:
         if (proxy['used'] == False):
+            index = index + 1
             return proxy
     return None
 
