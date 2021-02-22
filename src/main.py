@@ -13,8 +13,8 @@ result_urls = []
 keyword = ''
 tasks = []
 retry_cnt = {}
-MAX_PAGES = 20
-RETRY_MAX = 3
+MAX_PAGES = 100
+RETRY_MAX = 6
 
 def callback(task):
     global err_cnt

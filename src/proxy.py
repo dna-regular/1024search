@@ -38,6 +38,8 @@ def GetUnusedProxy():
     for proxy in proxy_list[index:]:
         if (proxy['used'] == False):
             index = index + 1
+            if index == len(proxy_list):
+                index = 0
             return proxy
     return None
 
